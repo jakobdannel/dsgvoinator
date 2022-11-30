@@ -28,22 +28,25 @@ def download_font(url, path):
 
     if not os.path.exists(path):
         os.mkdir(path)
-    s = requests.get(url).text
-    with open(path + '/' + filename + '.' + filetype, 'w') as file: 
+    s = requests.get(url).content
+    with open(path + '/' + filename + '.' + filetype, 'wb') as file: 
         file.write(s)
     return filename
 
+print("Please enter the file path to your angular project:")
+path = input()
+
 #Using angular.json to find style language (css/scss/sass/less)
 print("Determining used styling language...")
-angular = open("angular.json")
+angular = open(path + "angular.json")
 angular = json.load(angular)
 for key in angular['projects']:
     inlineStyleLanguage = angular['projects'][key]['architect']['build']['options']['inlineStyleLanguage']
 print(f'Detected {inlineStyleLanguage}.')
 
 #Open files
-index = open("src/index.html")
-styles = open("src/styles." + inlineStyleLanguage)
+index = open(path + "src/index.html")
+styles = open(path + "src/styles." + inlineStyleLanguage)
 
 #Reading lines
 index_lines = index.readlines()
@@ -75,14 +78,14 @@ filenames = []
 #Downloadind the stylesheets
 print("Downloading stylesheets...")
 for link in stylesheet_links:
-    filenames.append(download_stylesheet(link, 'font-stylesheets', inlineStyleLanguage))
+    filenames.append(download_stylesheet(link, path + 'font-stylesheets', inlineStyleLanguage))
 
 #Finding font urls in the downloaded stylesheets
 font_links = []
 search_link_fonts = "https://fonts.gstatic.com"
 print("Searching for font file links...")
 for name in filenames:
-    file = open('font-stylesheets/' + name + '.' + inlineStyleLanguage)
+    file = open(path + 'font-stylesheets/' + name + '.' + inlineStyleLanguage)
     lines = file.readlines()
     for row in lines:
         start = row.find(search_link_fonts)
@@ -94,13 +97,13 @@ for name in filenames:
 print(f'Found {len(font_links)} font files.')
 
 #Check if path exists and generate it if it doesnt
-if not os.path.exists('fonts'):
-    os.mkdir('fonts')
+if not os.path.exists(path + 'fonts'):
+    os.mkdir(path + 'fonts')
 
 #Downloading fonts
 print("Downloading fonts...")
 for link in font_links:
-    download_font(link, 'fonts')
+    download_font(link, path + 'fonts')
 #Removing google font links from index.html
 new_index_html_array = []
 for row in index_lines:
@@ -126,7 +129,7 @@ if angular_material:
                     link_end = len(link)
                     link_end = link.find('&')
                     link = link[link_start:link_end]
-                    new_styles.append(f'@import url("font-stylesheets/{link}.{inlineStyleLanguage}");\n')
+                    new_styles.append(f'@import url("../font-stylesheets/{link}.{inlineStyleLanguage}");\n')
 else:
     #Add new links
     for link in stylesheet_links:
@@ -134,7 +137,7 @@ else:
         link_end = len(link)
         link_end = link.find('&')
         link = link[link_start:link_end]
-        new_styles.append(f'@import url("font-stylesheets/{link}.{inlineStyleLanguage}");\n')
+        new_styles.append(f'@import url("../font-stylesheets/{link}.{inlineStyleLanguage}");\n')
     #Writing old file contents without google links
     for row in styles_lines:
         if row.find(search_link_stylesheets) == -1 and row.find(search_link_fonts) == -1:
@@ -148,7 +151,7 @@ for link in stylesheet_links:
     link_end = link.find('&')
     link = link[link_start:link_end]
     
-    style_file = open('font-stylesheets/' + link + '.' + inlineStyleLanguage)
+    style_file = open(path + 'font-stylesheets/' + link + '.' + inlineStyleLanguage)
     new_style_file_array = []
 
     for row in style_file:
@@ -161,7 +164,7 @@ for link in stylesheet_links:
                     font_link = font_link[link_start:]
                     new_style_file_array.append(f'  src: url("../fonts/{font_link}")')
     print(f"Rewriting stylesheet {link}...")
-    with open('font-stylesheets/' + link + '.' + inlineStyleLanguage, 'w') as style_file:
+    with open(path + 'font-stylesheets/' + link + '.' + inlineStyleLanguage, 'w') as style_file:
         for row in new_style_file_array:
             style_file.write(row)
 
@@ -169,7 +172,7 @@ for link in stylesheet_links:
 
 #Writing index.html
 print("Rewriting index.html...")
-with open('src/index.html', 'w') as new_index_html:
+with open(path + 'src/index.html', 'w') as new_index_html:
     for row in new_index_html_array:
         new_index_html.write(row)
 
@@ -177,7 +180,7 @@ new_index_html.close()
 
 #Writing stylesheet
 print("Rewriting main style sheet...")
-with open('src/styles.' + inlineStyleLanguage, 'w') as new_styles_file:
+with open(path + 'src/styles.' + inlineStyleLanguage, 'w') as new_styles_file:
     for row in new_styles:
         new_styles_file.write(row)
 
