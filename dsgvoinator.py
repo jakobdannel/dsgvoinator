@@ -40,9 +40,8 @@ angular = json.load(angular)
 for key in angular['projects']:
     inlineStyleLanguage = angular['projects'][key]['architect']['build']['options']['inlineStyleLanguage']
 print(f'Detected {inlineStyleLanguage}.')
+
 #Open files
-
-
 index = open("src/index.html")
 styles = open("src/styles." + inlineStyleLanguage)
 
@@ -102,12 +101,13 @@ if not os.path.exists('fonts'):
 print("Downloading fonts...")
 for link in font_links:
     download_font(link, 'fonts')
-#Rewriting index.html
+#Removing google font links from index.html
 new_index_html_array = []
 for row in index_lines:
     if row.find(search_link_stylesheets) == -1 and row.find(search_link_fonts) == -1:
         new_index_html_array.append(row)
 
+#Removing google links from stylesheet
 new_styles = []
 for row in styles_lines:
     if row.find(search_link_stylesheets) == -1 and row.find(search_link_fonts) == -1:
@@ -120,6 +120,7 @@ for row in styles_lines:
                 link = link[link_start:link_end]
                 new_styles.append(f'@import url("font-stylesheets/{link}.{inlineStyleLanguage}");\n')
 
+#Rewriting generated stylesheets for the fonts
 for link in stylesheet_links:
     link_start = link.rindex('family=') + 7
     link_end = len(link)
@@ -145,6 +146,7 @@ for link in stylesheet_links:
 
     style_file.close()
 
+#Writing index.html
 print("Rewriting index.html...")
 with open('src/index.html', 'w') as new_index_html:
     for row in new_index_html_array:
@@ -152,6 +154,7 @@ with open('src/index.html', 'w') as new_index_html:
 
 new_index_html.close()
 
+#Writing stylesheet
 print("Rewriting main style sheet...")
 with open('src/styles.' + inlineStyleLanguage, 'w') as new_styles_file:
     for row in new_styles:
