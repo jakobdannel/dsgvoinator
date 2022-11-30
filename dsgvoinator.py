@@ -113,35 +113,20 @@ for row in index_lines:
 #Removing google links from stylesheet
 new_styles = []
 #Determining if angular material is used
-angular_material = False
+
 for row in styles_lines:
-    if row.find('~@use "angular/material'):
-        angular_material = True
-if angular_material:
-    for row in styles_lines:
-        #Only write lines without google links
-        if row.find(search_link_stylesheets) == -1 and row.find(search_link_fonts) == -1:
-            new_styles.append(row)
-            #Write new font imports after the angular material import
-            if row.find('@use "~@angular/material" as mat;') != -1:
-                for link in stylesheet_links:
-                    link_start = link.rindex('family=') + 7
-                    link_end = len(link)
-                    link_end = link.find('&')
-                    link = link[link_start:link_end]
-                    new_styles.append(f'@import url("../font-stylesheets/{link}.{inlineStyleLanguage}");\n')
-else:
-    #Add new links
-    for link in stylesheet_links:
-        link_start = link.rindex('family=') + 7
-        link_end = len(link)
-        link_end = link.find('&')
-        link = link[link_start:link_end]
-        new_styles.append(f'@import url("../font-stylesheets/{link}.{inlineStyleLanguage}");\n')
-    #Writing old file contents without google links
-    for row in styles_lines:
-        if row.find(search_link_stylesheets) == -1 and row.find(search_link_fonts) == -1:
-            new_styles.append(row)
+    #Only write lines without google links
+    if row.find(search_link_stylesheets) == -1 and row.find(search_link_fonts) == -1:
+        new_styles.append(row)
+
+new_styles.append(f'\n')
+
+for link in stylesheet_links:
+    link_start = link.rindex('family=') + 7
+    link_end = len(link)
+    link_end = link.find('&')
+    link = link[link_start:link_end]
+    new_styles.append(f'@import url("../font-stylesheets/{link}.{inlineStyleLanguage}");\n')
                 
 
 #Rewriting generated stylesheets for the fonts
