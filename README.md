@@ -4,7 +4,7 @@ A tool that downloads google fonts to an Angular Project and replaces all links 
 ## How to use this tool
 
 - Install python
-- Copy the file 'dsgvoinator.py' into any folder 
+- Clone this repository with `git clone git@github.com:jakobdannel/dsgvoinator.git`
 - Run `python3 dsgvoinator.py`
 - Enter the filepath to your angular project root folder when prompted
 
