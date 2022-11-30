@@ -1,5 +1,5 @@
 # dsgvoinator
-A tool that downloads google fonts in an Angular Project and replaces all links in scss files with correct links
+A tool that downloads google fonts to an Angular Project and replaces all links in scss files with local links to comply with the DSGVO
 
 ## How to use this tool
 
