@@ -1,12 +1,13 @@
 import os
 import requests
+import json
 
 def download_stylesheet(url, path, filetype):
     #Finding font name in link
     filename_start = url.find('family=') + 7
     filename_end = len(url)
     filename_end = url.find('&')
-
+    
     filename = url[filename_start:filename_end]
 
     if not os.path.exists(path):
@@ -32,9 +33,18 @@ def download_font(url, path):
         file.write(s)
     return filename
 
+#Using angular.json to find style language (css/scss/sass/less)
+print("Determining used styling language...")
+angular = open("angular.json")
+angular = json.load(angular)
+for key in angular['projects']:
+    inlineStyleLanguage = angular['projects'][key]['architect']['build']['options']['inlineStyleLanguage']
+print(f'Detected {inlineStyleLanguage}.')
 #Open files
+
+
 index = open("src/index.html")
-styles = open("src/styles.scss")
+styles = open("src/styles." + inlineStyleLanguage)
 
 #Reading lines
 index_lines = index.readlines()
@@ -53,7 +63,7 @@ for row in index_lines:
     if start != -1:
         stylesheet_links.append(row[:end])
 
-#search for links in styles.scss
+#search for links in styles
 for row in styles_lines:
     start = row.find(search_link_stylesheets)
     row = row[start:]
@@ -66,14 +76,14 @@ filenames = []
 #Downloadind the stylesheets
 print("Downloading stylesheets...")
 for link in stylesheet_links:
-    filenames.append(download_stylesheet(link, 'font-stylesheets', 'scss'))
+    filenames.append(download_stylesheet(link, 'font-stylesheets', inlineStyleLanguage))
 
 #Finding font urls in the downloaded stylesheets
 font_links = []
 search_link_fonts = "https://fonts.gstatic.com"
 print("Searching for font file links...")
 for name in filenames:
-    file = open('font-stylesheets/' + name + '.scss')
+    file = open('font-stylesheets/' + name + '.' + inlineStyleLanguage)
     lines = file.readlines()
     for row in lines:
         start = row.find(search_link_fonts)
@@ -98,17 +108,17 @@ for row in index_lines:
     if row.find(search_link_stylesheets) == -1 and row.find(search_link_fonts) == -1:
         new_index_html_array.append(row)
 
-new_styles_scss = []
+new_styles = []
 for row in styles_lines:
     if row.find(search_link_stylesheets) == -1 and row.find(search_link_fonts) == -1:
-        new_styles_scss.append(row)
+        new_styles.append(row)
         if row.find('@use "~@angular/material" as mat;') != -1:
             for link in stylesheet_links:
                 link_start = link.rindex('family=') + 7
                 link_end = len(link)
                 link_end = link.find('&')
                 link = link[link_start:link_end]
-                new_styles_scss.append(f'@import url("font-stylesheets/{link}.scss");\n')
+                new_styles.append(f'@import url("font-stylesheets/{link}.{inlineStyleLanguage}");\n')
 
 for link in stylesheet_links:
     link_start = link.rindex('family=') + 7
@@ -116,24 +126,24 @@ for link in stylesheet_links:
     link_end = link.find('&')
     link = link[link_start:link_end]
     
-    scss_file = open('font-stylesheets/' + link + '.scss')
-    new_scss_file_array = []
+    style_file = open('font-stylesheets/' + link + '.' + inlineStyleLanguage)
+    new_style_file_array = []
 
-    for row in scss_file:
+    for row in style_file:
         if row.find(search_link_fonts) == -1:
-            new_scss_file_array.append(row)
+            new_style_file_array.append(row)
         else:
             for font_link in font_links:
                 if not row.find(font_link) == -1:
                     link_start = font_link.rindex('/') + 1
                     font_link = font_link[link_start:]
-                    new_scss_file_array.append(f'  src: url("../fonts/{font_link}")')
+                    new_style_file_array.append(f'  src: url("../fonts/{font_link}")')
     print(f"Rewriting stylesheet {link}...")
-    with open('font-stylesheets/' + link + '.scss', 'w') as scss_file:
-        for row in new_scss_file_array:
-            scss_file.write(row)
+    with open('font-stylesheets/' + link + '.' + inlineStyleLanguage, 'w') as style_file:
+        for row in new_style_file_array:
+            style_file.write(row)
 
-    scss_file.close()
+    style_file.close()
 
 print("Rewriting index.html...")
 with open('src/index.html', 'w') as new_index_html:
@@ -143,10 +153,10 @@ with open('src/index.html', 'w') as new_index_html:
 new_index_html.close()
 
 print("Rewriting main style sheet...")
-with open('src/styles.scss', 'w') as new_styles_scss_file:
-    for row in new_styles_scss:
-        new_styles_scss_file.write(row)
+with open('src/styles.' + inlineStyleLanguage, 'w') as new_styles_file:
+    for row in new_styles:
+        new_styles_file.write(row)
 
-new_styles_scss_file.close()
+new_styles_file.close()
 
 print("DSGVOinator done.")
